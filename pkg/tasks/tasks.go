@@ -102,18 +102,18 @@ func FormReport(tasks Tasks) (string, error) {
 		}
 	}
 	for _, task := range tasks {
-		var timeStr string
-		hrs := int(task.Spent.Hours())
-		mins := int(task.Spent.Minutes()) % 60
-		if hrs > 0 {
-			timeStr = fmt.Sprintf("%dч%dм", hrs, mins)
-		} else {
-			timeStr = fmt.Sprintf("%dм", mins)
-		}
-		_, err := fmt.Fprintf(buf, "%s %s\n", timeStr, task.Name)
+		_, err := fmt.Fprintf(buf, "%s %s\n", formatDuration(task.Spent), task.Name)
 		if err != nil {
 			return "", fmt.Errorf("cannot write today's history to file: %w", err)
 		}
+	}
+	var total time.Duration
+	for _, task := range tasks {
+		total += task.Spent
+	}
+	_, err = fmt.Fprintf(buf, "Total: %s\n", formatDuration(total))
+	if err != nil {
+		return "", fmt.Errorf("cannot write today's history to file: %w", err)
 	}
 	return buf.String(), nil
 }
@@ -164,4 +164,17 @@ func cls() {
 	cmd := exec.Command("clear")
 	cmd.Stdout = os.Stdout
 	_ = cmd.Run()
+}
+
+func formatDuration(duration time.Duration) string {
+	hours, minutes := duration.Hours(), duration.Minutes()
+	var timeStr string
+	hrs := int(hours)
+	mins := int(minutes) % 60
+	if hrs > 0 {
+		timeStr = fmt.Sprintf("%dч%dм", hrs, mins)
+	} else {
+		timeStr = fmt.Sprintf("%dм", mins)
+	}
+	return timeStr
 }
